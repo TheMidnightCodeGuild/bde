@@ -31,13 +31,13 @@ export default async function handler(req, res) {
         const intern = await Intern.findOne({ email });
 
         if (!intern) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid email' });
         }
 
         const isPasswordValid = await bcrypt.compare(password, intern.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid password' });
         }
 
         // Save user to session
