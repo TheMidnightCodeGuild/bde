@@ -6,6 +6,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
+  const [showAddCallForm, setShowAddCallForm] = useState(false);
+  const [newCall, setNewCall] = useState({
+    NoOfClients: '',
+    MeetingsScheduled: ''
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -32,6 +37,35 @@ const Dashboard = () => {
 
     fetchUserData();
   }, [router]);
+
+  const handleAddCall = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/intern/add-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(newCall)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUserData(prevData => ({
+          ...prevData,
+          calls: [...prevData.calls, { ...data.call }]
+        }));
+        setShowAddCallForm(false);
+        setNewCall({ NoOfClients: '', MeetingsScheduled: '' });
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError('Failed to add call data');
+    }
+  };
 
   if (loading) {
     return (
@@ -132,9 +166,81 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {userData?.calls && userData.calls.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8">Recent Calls</h2>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-8">Assigned Data</h2>
+          {userData?.DataAssigned && userData.DataAssigned.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-4 px-6 text-sm font-medium text-slate-500">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userData.DataAssigned.map((data, index) => (
+                    <tr key={index} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="py-4 px-6 text-slate-900">
+                        <pre className="whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-slate-500">No data has been assigned yet.</p>
+          )}
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Recent Calls</h2>
+            <button
+              onClick={() => setShowAddCallForm(!showAddCallForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {showAddCallForm ? 'Cancel' : 'Add New Call'}
+            </button>
+          </div>
+
+          {showAddCallForm && (
+            <form onSubmit={handleAddCall} className="mb-8 p-6 bg-slate-50 rounded-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Number of Clients Called
+                  </label>
+                  <input
+                    type="number"
+                    value={newCall.NoOfClients}
+                    onChange={(e) => setNewCall(prev => ({ ...prev, NoOfClients: e.target.value }))}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Meetings Scheduled
+                  </label>
+                  <input
+                    type="number"
+                    value={newCall.MeetingsScheduled}
+                    onChange={(e) => setNewCall(prev => ({ ...prev, MeetingsScheduled: e.target.value }))}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Submit Call Data
+              </button>
+            </form>
+          )}
+
+          {userData?.calls && userData.calls.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -169,8 +275,8 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
