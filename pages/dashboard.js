@@ -7,9 +7,14 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const router = useRouter();
   const [showAddCallForm, setShowAddCallForm] = useState(false);
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
   const [newCall, setNewCall] = useState({
     NoOfClients: '',
     MeetingsScheduled: ''
+  });
+  const [newComplaint, setNewComplaint] = useState({
+    title: '',
+    description: ''
   });
 
   useEffect(() => {
@@ -64,6 +69,32 @@ const Dashboard = () => {
       }
     } catch (err) {
       setError('Failed to add call data');
+    }
+  };
+
+  const handleAddComplaint = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/complaints', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(newComplaint)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setShowComplaintForm(false);
+        setNewComplaint({ title: '', description: '' });
+        // Show success message or update UI as needed
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError('Failed to submit complaint');
     }
   };
 
@@ -275,6 +306,54 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Complaints & Suggestions</h2>
+            <button
+              onClick={() => setShowComplaintForm(!showComplaintForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {showComplaintForm ? 'Cancel' : 'Add New Complaint'}
+            </button>
+          </div>
+
+          {showComplaintForm && (
+            <form onSubmit={handleAddComplaint} className="mb-8 p-6 bg-slate-50 rounded-xl">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newComplaint.title}
+                    onChange={(e) => setNewComplaint(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={newComplaint.description}
+                    onChange={(e) => setNewComplaint(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 h-32"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Submit Complaint
+              </button>
+            </form>
           )}
         </div>
       </div>
